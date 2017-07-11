@@ -12,19 +12,41 @@
 
 @interface BMScreenDragView ()
 
-@property (strong, nonatomic) MASConstraint *top; ///< top
+@property (strong, nonatomic) MASConstraint *top;  ///< top
 @property (strong, nonatomic) MASConstraint *left; ///< left
-@property (assign, nonatomic) CGPoint oldPoint; ///< 前一点的指标
-@property (assign, nonatomic) BOOL normalDrag;  ///< 是否为正常拖拽
+@property (assign, nonatomic) CGPoint oldPoint;    ///< 前一点的指标
+@property (assign, nonatomic) BOOL normalDrag;     ///< 是否为正常拖拽
 
 @end
 
 @implementation BMScreenDragView
 
-- (void)didMoveToSuperview {
-    if (!self.superview) {
-        return;
+#pragma mark -
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    [self initUI];
+}
+
+#pragma mark - init
+
+- (instancetype)init {
+    if (self = [super init]) {
+        [self initUI];
     }
+    return self;
+}
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    if (self = [super initWithFrame:frame]) {
+        [self initUI];
+    }
+    return self;
+}
+
+#pragma mark - 私有方法
+
+- (void)didMoveToSuperview {
     [self mas_remakeConstraints:^(MASConstraintMaker *make) {
         self.top = make.top.mas_equalTo(self.frame.origin.y).priorityLow();
         self.left = make.left.mas_equalTo(self.frame.origin.x).priorityLow();
@@ -37,25 +59,11 @@
     }];
 }
 
-+ (instancetype)screenDragViewWithFrame:(CGRect)frame {
-    BMScreenDragView *view = [BMScreenDragView new];
-    view.frame = frame;
-    return view;
+- (void)initUI {
+    [self addGestureRecognizer:[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGestureRecognizer:)]];
 }
 
-- (instancetype)init {
-    if (self = [super init]) {
-        [self addGestureRecognizer:[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGestureRecognizer:)]];
-    }
-    return self;
-}
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    if (self = [super initWithFrame:frame]) {
-        [self addGestureRecognizer:[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGestureRecognizer:)]];
-    }
-    return self;
-}
+#pragma mark - 事件响应
 
 - (void)panGestureRecognizer:(UIPanGestureRecognizer *)panGestureRecognizer {
     CGPoint point = [panGestureRecognizer locationInView:self.superview];
@@ -63,21 +71,40 @@
         case UIGestureRecognizerStateBegan:
             self.oldPoint = point;
             self.normalDrag = YES;
+            if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:beganDragOfPoint:)]) {
+                [self.delegate screenDragView:self beganDragOfPoint:point];
+            }
             break;
         case UIGestureRecognizerStateChanged:
             if (self.normalDrag) {
                 self.top.mas_equalTo(self.frame.origin.y + (point.y - self.oldPoint.y));
                 self.left.mas_equalTo(self.frame.origin.x + (point.x - self.oldPoint.x));
                 self.oldPoint = point;
+                if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:changedDragOfPoint:)]) {
+                    [self.delegate screenDragView:self changedDragOfPoint:point];
+                }
             }
             break;
         case UIGestureRecognizerStateEnded:
-            self.normalDrag = NO; {
-                [UIView animateWithDuration:0.25 animations:^{
-                    self.left.mas_equalTo((self.oldPoint.x < self.superview.frame.size.width / 2.0) ? 0.0f : self.superview.frame.size.width);
-                    [self.superview layoutIfNeeded];
-                }];
+            self.normalDrag = NO;
+            if (self.isAutomaticEdge) {
+                if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
+                    [self.delegate screenDragView:self stopOfPoint:point];
+                }
+                break;
             }
+        {
+            CGFloat tempX = (self.oldPoint.x < self.superview.frame.size.width / 2.0) ? 0.0f : self.superview.frame.size.width;
+            [UIView animateWithDuration:0.25 animations:^{
+                self.left.mas_equalTo(tempX);
+                [self.superview layoutIfNeeded];
+            } completion:^(BOOL finished) {
+                if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
+                    [self.delegate screenDragView:self stopOfPoint:CGPointMake(tempX, point.y)];
+                }
+            }];
+        }
+            break;
         default:
             break;
     }

@@ -8,12 +8,56 @@
 
 #import <UIKit/UIKit.h>
 
+@class BMScreenDragView;
+
+/**
+ BMScreenDragViewDelegate
+ */
 @protocol BMScreenDragViewDelegate <NSObject>
+
+@optional
+
+/**
+ 开始拖拽时
+
+ @param screenDragView screenDragView
+ @param point 位置
+ */
+- (void)screenDragView:(BMScreenDragView *)screenDragView beganDragOfPoint:(CGPoint)point;
+
+/**
+ 正在拖拽时
+ 
+ @param screenDragView screenDragView
+ @param point 位置
+ */
+- (void)screenDragView:(BMScreenDragView *)screenDragView changedDragOfPoint:(CGPoint)point;
+
+/**
+ 结束拖拽时
+ 
+ @param screenDragView screenDragView
+ @param point 位置
+ */
+- (void)screenDragView:(BMScreenDragView *)screenDragView endedDragOfPoint:(CGPoint)point;
+
+/**
+ 已停止
+ 
+ @param screenDragView screenDragView
+ @param point 位置
+ */
+- (void)screenDragView:(BMScreenDragView *)screenDragView stopOfPoint:(CGPoint)point;
 
 @end
 
+/**
+ 拖拽view
+ */
 @interface BMScreenDragView : UIView
 
-+ (instancetype)screenDragViewWithFrame:(CGRect)frame;
+@property (weak, nonatomic) id<BMScreenDragViewDelegate> delegate; ///< 代理 默认为nil
+
+@property (assign, nonatomic, getter=isAutomaticEdge) BOOL automaticEdge; ///< 停止时是否自动到边缘 默认为YES
 
 @end
