@@ -1,0 +1,4 @@
+target 'BMScreenDragViewDemo' do
+   pod 'pop', '1.0.10'
+   pod 'Masonry', '1.0.2'
+end

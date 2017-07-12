@@ -9,6 +9,7 @@
 
 #import "BMScreenDragView.h"
 #import "Masonry.h"
+#import <pop/POP.h>
 
 @interface BMScreenDragView ()
 
@@ -69,6 +70,7 @@
     CGPoint point = [panGestureRecognizer locationInView:self.superview];
     switch (panGestureRecognizer.state) {
         case UIGestureRecognizerStateBegan:
+            _isDraging = YES;
             self.oldPoint = point;
             self.normalDrag = YES;
             if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:beganDragOfPoint:)]) {
@@ -86,27 +88,37 @@
             }
             break;
         case UIGestureRecognizerStateEnded:
-            self.normalDrag = NO;
-            if (self.isAutomaticEdge) {
-                if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
-                    [self.delegate screenDragView:self stopOfPoint:point];
-                }
-                break;
-            }
-        {
-            CGFloat tempX = (self.oldPoint.x < self.superview.frame.size.width / 2.0) ? 0.0f : self.superview.frame.size.width;
-            [UIView animateWithDuration:0.25 animations:^{
-                self.left.mas_equalTo(tempX);
-                [self.superview layoutIfNeeded];
-            } completion:^(BOOL finished) {
-                if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
-                    [self.delegate screenDragView:self stopOfPoint:CGPointMake(tempX, point.y)];
-                }
-            }];
-        }
+            [self endedWithPoint:point];
+            _isDraging = NO;
             break;
         default:
             break;
+    }
+}
+
+- (void)endedWithPoint:(CGPoint)point {
+    self.normalDrag = NO;
+    if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:endedDragOfPoint:)]) {
+        [self.delegate screenDragView:self endedDragOfPoint:point];
+    }
+    if (self.isAutomaticEdge) {
+        if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
+            [self.delegate screenDragView:self stopOfPoint:point];
+        }
+    } else {
+        CGFloat tempX = (self.oldPoint.x < self.superview.frame.size.width / 2.0) ? 0.0f : self.superview.frame.size.width;
+        // 执行Spring动画
+        POPSpringAnimation *anim = [POPSpringAnimation animationWithPropertyNamed:kPOPLayerPositionX];
+        CGFloat w =  (self.oldPoint.x < self.superview.frame.size.width / 2.0) ? -self.frame.size.width/2.0: self.frame.size.width/2.0;
+        anim.toValue             = @(tempX - w);
+        anim.springBounciness    = 8.f;
+        [self.layer pop_addAnimation:anim forKey:@"ScaleY"];
+        anim.completionBlock = ^(POPAnimation *anim, BOOL finished){
+            self.left.mas_equalTo(tempX);
+            if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
+                [self.delegate screenDragView:self stopOfPoint:CGPointMake(tempX, point.y)];
+            }
+        };
     }
 }
 

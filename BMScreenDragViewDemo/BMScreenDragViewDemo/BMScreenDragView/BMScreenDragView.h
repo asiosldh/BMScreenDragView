@@ -60,4 +60,6 @@
 
 @property (assign, nonatomic, getter=isAutomaticEdge) BOOL automaticEdge; ///< 停止时是否自动到边缘 默认为YES
 
+@property (assign, nonatomic, readonly) BOOL isDraging; ///< 是否正在拖拽
+
 @end
