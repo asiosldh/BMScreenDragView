@@ -9,4 +9,6 @@ s.platform     = :ios, '8.0'
 s.source       = {:git => 'https://github.com/asiosldh/BMScreenDragView.git', :tag => s.version}
 s.source_files = 'BMScreenDragViewDemo/BMScreenDragViewDemo/BMScreenDragView/**/*.{h,m}'
 s.requires_arc = true
+s.dependency "pop", "~> 1.0.10"
+s.dependency "Masonry", "~> 1.0.2"
 end
