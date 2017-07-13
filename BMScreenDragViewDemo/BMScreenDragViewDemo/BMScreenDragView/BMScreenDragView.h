@@ -11,6 +11,17 @@
 @class BMScreenDragView;
 
 /**
+ 默认停止位置
+
+ - BMScreenDragViewAutomaticTypeLeftRight: 左右边沿停止
+ - BMScreenDragViewAutomaticTypeTopBotton: 上下边沿停止
+ */
+typedef NS_ENUM(NSInteger, BMScreenDragViewAutomaticType) {
+    BMScreenDragViewAutomaticTypeLeftRight,
+    BMScreenDragViewAutomaticTypeTopBotton,
+};
+
+/**
  BMScreenDragViewDelegate
  */
 @protocol BMScreenDragViewDelegate <NSObject>
@@ -58,6 +69,7 @@
 
 @property (weak, nonatomic) id<BMScreenDragViewDelegate> delegate; ///< 代理 默认为nil
 
+@property (assign, nonatomic, getter=isScreenDragViewAutomaticType) BMScreenDragViewAutomaticType screenDragViewAutomaticType; ///< 自动停止位置 默认 BMScreenDragViewAutomaticTypeLeftRight
 @property (assign, nonatomic, getter=isAutomaticEdge) BOOL automaticEdge; ///< 停止时是否自动到边缘 默认为YES
 
 @property (assign, nonatomic, readonly) BOOL isDraging; ///< 是否正在拖拽

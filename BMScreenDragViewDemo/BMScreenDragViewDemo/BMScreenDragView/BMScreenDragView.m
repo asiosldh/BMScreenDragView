@@ -48,16 +48,18 @@
 #pragma mark - 私有方法
 
 - (void)didMoveToSuperview {
-    [self mas_remakeConstraints:^(MASConstraintMaker *make) {
-        self.top = make.top.mas_equalTo(self.frame.origin.y).priorityLow();
-        self.left = make.left.mas_equalTo(self.frame.origin.x).priorityLow();
-        make.height.mas_equalTo(self.frame.size.height);
-        make.width.mas_equalTo(self.frame.size.width);
-        make.bottom.mas_lessThanOrEqualTo(0);
-        make.right.mas_lessThanOrEqualTo(0);
-        make.top.mas_greaterThanOrEqualTo(0);
-        make.left.mas_greaterThanOrEqualTo(0);
-    }];
+    if (self.superview) {
+        [self mas_remakeConstraints:^(MASConstraintMaker *make) {
+            self.top = make.top.mas_equalTo(self.frame.origin.y).priorityLow();
+            self.left = make.left.mas_equalTo(self.frame.origin.x).priorityLow();
+            make.height.mas_equalTo(self.frame.size.height);
+            make.width.mas_equalTo(self.frame.size.width);
+            make.bottom.mas_lessThanOrEqualTo(0);
+            make.right.mas_lessThanOrEqualTo(0);
+            make.top.mas_greaterThanOrEqualTo(0);
+            make.left.mas_greaterThanOrEqualTo(0);
+        }];   
+    }
 }
 
 - (void)initUI {
@@ -101,24 +103,40 @@
     if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:endedDragOfPoint:)]) {
         [self.delegate screenDragView:self endedDragOfPoint:point];
     }
-    if (self.isAutomaticEdge) {
+    if (!self.isAutomaticEdge) {
         if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
             [self.delegate screenDragView:self stopOfPoint:point];
         }
     } else {
-        CGFloat tempX = (self.oldPoint.x < self.superview.frame.size.width / 2.0) ? 0.0f : self.superview.frame.size.width;
-        // 执行Spring动画
-        POPSpringAnimation *anim = [POPSpringAnimation animationWithPropertyNamed:kPOPLayerPositionX];
-        CGFloat w =  (self.oldPoint.x < self.superview.frame.size.width / 2.0) ? -self.frame.size.width/2.0: self.frame.size.width/2.0;
-        anim.toValue             = @(tempX - w);
-        anim.springBounciness    = 8.f;
-        [self.layer pop_addAnimation:anim forKey:@"ScaleY"];
-        anim.completionBlock = ^(POPAnimation *anim, BOOL finished){
-            self.left.mas_equalTo(tempX);
-            if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
-                [self.delegate screenDragView:self stopOfPoint:CGPointMake(tempX, point.y)];
-            }
-        };
+        if (self.screenDragViewAutomaticType == BMScreenDragViewAutomaticTypeLeftRight) {
+            CGFloat tempX = (self.oldPoint.x < self.superview.frame.size.width / 2.0) ? 0.0f : self.superview.frame.size.width;
+            // 执行Spring动画
+            POPSpringAnimation *anim = [POPSpringAnimation animationWithPropertyNamed:kPOPLayerPositionX];
+            CGFloat w =  (self.oldPoint.x < self.superview.frame.size.width / 2.0) ? -self.frame.size.width/2.0: self.frame.size.width/2.0;
+            anim.toValue             = @(tempX - w);
+            anim.springBounciness    = 8.f;
+            [self.layer pop_addAnimation:anim forKey:@"ScaleY"];
+            anim.completionBlock = ^(POPAnimation *anim, BOOL finished){
+                self.left.mas_equalTo(tempX);
+                if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
+                    [self.delegate screenDragView:self stopOfPoint:CGPointMake(tempX, point.y)];
+                }
+            };
+        } else {
+            CGFloat tempY = (self.oldPoint.y < self.superview.frame.size.height / 2.0) ? 0.0f : self.superview.frame.size.height;
+            // 执行Spring动画
+            POPSpringAnimation *anim = [POPSpringAnimation animationWithPropertyNamed:kPOPLayerPositionY];
+            CGFloat temp =  (self.oldPoint.y < self.superview.frame.size.height / 2.0) ? -self.frame.size.height/2.0: self.frame.size.height/2.0;
+            anim.toValue             = @(tempY - temp);
+            anim.springBounciness    = 8.f;
+            [self.layer pop_addAnimation:anim forKey:@"ScaleY"];
+            anim.completionBlock = ^(POPAnimation *anim, BOOL finished){
+                self.top.mas_equalTo(tempY);
+                if (self.delegate && [self.delegate respondsToSelector:@selector(screenDragView:stopOfPoint:)]) {
+                    [self.delegate screenDragView:self stopOfPoint:CGPointMake(point.x, tempY)];
+                }
+            };
+        }
     }
 }
 

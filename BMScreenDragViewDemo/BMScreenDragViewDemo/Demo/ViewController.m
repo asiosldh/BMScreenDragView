@@ -24,7 +24,8 @@
         screenDragView.backgroundColor = [UIColor blueColor];
         [self.view addSubview:screenDragView];
         screenDragView.delegate = self;
-        
+        screenDragView.automaticEdge = YES;
+        screenDragView.screenDragViewAutomaticType = 1;
     });
 }
 
